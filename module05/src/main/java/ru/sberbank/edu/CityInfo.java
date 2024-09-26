@@ -8,6 +8,14 @@ public class CityInfo {
     private String name;
     private GeoPosition position;
 
+    public String getName() {
+        return name;
+    }
+
+    public GeoPosition getPosition() {
+        return position;
+    }
+
     /**
      * Ctor.
      *
