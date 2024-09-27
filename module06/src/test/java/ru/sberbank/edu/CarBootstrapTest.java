@@ -1,7 +1,8 @@
 package ru.sberbank.edu;
 
-
+import org.assertj.core.api.Assertions;
 import org.h2.tools.Server;
+import org.junit.jupiter.api.Test;
 import ru.sberbank.edu.dbconnection.H2DbEmbedded;
 import ru.sberbank.edu.repository.CarDbRepositoryImpl;
 import ru.sberbank.edu.repository.CarRepository;
@@ -9,11 +10,15 @@ import ru.sberbank.edu.service.CarService;
 import ru.sberbank.edu.service.CarServiceImpl;
 
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Statement;
 
-public class CarBootstrap {
-    public static void main(String[] args) throws Exception {
-        Server server = Server.createTcpServer(args).start();
+class CarBootstrapTest {
+
+    @Test
+    void main() throws SQLException {
+        String args;
+        Server server = Server.createTcpServer().start();
         H2DbEmbedded.initDb();
 
         try(H2DbEmbedded h2DbEmbedded = new H2DbEmbedded()) {
@@ -30,11 +35,6 @@ public class CarBootstrap {
             Statement statement = H2DbEmbedded.getConnection().createStatement();
             ResultSet resultSet = statement.executeQuery(readAllCarsSql);
 
-            while (resultSet.next()) {
-                String id = resultSet.getString(1);
-                String model = resultSet.getString(2);
-                System.out.println("id=" + id + "; model=" + model);
-            }
             // Test end
             carService.deleteCar("77");
 
@@ -42,22 +42,17 @@ public class CarBootstrap {
             statement = H2DbEmbedded.getConnection().createStatement();
             resultSet = statement.executeQuery(readAllCarsSql);
 
-            while (resultSet.next()) {
-                String id = resultSet.getString(1);
-                String model = resultSet.getString(2);
-                System.out.println("id=" + id + "; model=" + model);
-            }
 
-            System.out.println(carService.findAll());
+            Assertions.assertThat(carService.findAll().toString()).isEqualTo("[Car{id='777', model='Lada'}, Car{id='7', model='Gazel'}, Car{id='7777', model='UAZ'}]");
 
-            System.out.println(carService.findByModel("UAZ"));
+            Assertions.assertThat(carService.findByModel("UAZ").toString()).isEqualTo("[Car{id='7777', model='UAZ'}]");
 
-            System.out.println(carService.findAll());
+            Assertions.assertThat(carService.deleteAll()).isEqualTo(true);
 
-            System.out.println(carService.deleteAll());
+            Assertions.assertThat(carService.findAll().isEmpty()).isEqualTo(true);
 
-            System.out.println(carService.findAll());
-
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
         server.stop();
     }
